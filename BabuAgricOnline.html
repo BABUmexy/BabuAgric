@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BabuAgric Online</title>
+<style>
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: #f0f5f9;
+}
+header {
+    background: #4caf50;
+    color: white;
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+header h1 {
+    margin: 0;
+}
+nav button {
+    margin-left: 0.5rem;
+    padding: 0.5rem 1rem;
+    border: none;
+    background: white;
+    color: #4caf50;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 5px;
+}
+nav button:hover {
+    background: #e0f2e9;
+}
+main {
+    padding: 2rem;
+}
+.dashboard, .admin-view, .client-view {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+input, select, button {
+    padding: 0.5rem;
+    margin: 0.5rem 0;
+    width: 100%;
+    box-sizing: border-box;
+}
+</style>
+</head>
+<body>
+<header>
+<h1>BabuAgric</h1>
+<nav>
+<button id="adminView">Admin View</button>
+<button id="clientView">Client View</button>
+</nav>
+</header>
+<main id="mainContent">
+<div class="dashboard">
+<h2>Welcome to BabuAgric Online</h2>
+<p>Select a view to start.</p>
+</div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const supabaseUrl = "https://nrcshjenpweufgomtznt.supabase.co";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yY3NoamVucHdldWZnb210em50Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTU4OTc4NCwiZXhwIjoyMDc1MTY1Nzg0fQ.iTMiQ8cvgBCal6ZuNybaehJBvDGPb_Rzm5UhsEpzSUY";
+const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+const mainContent = document.getElementById('mainContent');
+const adminBtn = document.getElementById('adminView');
+const clientBtn = document.getElementById('clientView');
+
+function loadAdminView() {
+    mainContent.innerHTML = `
+        <div class="admin-view">
+            <h2>Admin Dashboard</h2>
+            <input type="text" id="farmName" placeholder="Farm Name">
+            <button onclick="addFarm()">Add Farm</button>
+            <ul id="farmList"></ul>
+        </div>
+    `;
+    fetchFarms();
+}
+
+function loadClientView() {
+    mainContent.innerHTML = `
+        <div class="client-view">
+            <h2>Client Dashboard</h2>
+            <input type="text" id="clientFarm" placeholder="Farm Name">
+            <input type="text" id="livestock" placeholder="Livestock Name">
+            <button onclick="addLivestock()">Add Livestock</button>
+            <ul id="clientList"></ul>
+        </div>
+    `;
+    fetchLivestock();
+}
+
+async function addFarm() {
+    const farmName = document.getElementById('farmName').value;
+    if(!farmName) return alert('Enter farm name!');
+    await supabase.from('farms').insert([{ name: farmName }]);
+    document.getElementById('farmName').value = '';
+    fetchFarms();
+}
+
+async function fetchFarms() {
+    const { data } = await supabase.from('farms').select('*');
+    const farmList = document.getElementById('farmList');
+    if(farmList) {
+        farmList.innerHTML = '';
+        data.forEach(f => {
+            const li = document.createElement('li');
+            li.textContent = f.name;
+            farmList.appendChild(li);
+        });
+    }
+}
+
+async function addLivestock() {
+    const farmName = document.getElementById('clientFarm').value;
+    const livestock = document.getElementById('livestock').value;
+    if(!farmName || !livestock) return alert('Enter both farm and livestock!');
+    await supabase.from('livestock').insert([{ farm_name: farmName, name: livestock }]);
+    document.getElementById('clientFarm').value = '';
+    document.getElementById('livestock').value = '';
+    fetchLivestock();
+}
+
+async function fetchLivestock() {
+    const { data } = await supabase.from('livestock').select('*');
+    const clientList = document.getElementById('clientList');
+    if(clientList) {
+        clientList.innerHTML = '';
+        data.forEach(l => {
+            const li = document.createElement('li');
+            li.textContent = `Farm: ${l.farm_name} - Livestock: ${l.name}`;
+            clientList.appendChild(li);
+        });
+    }
+}
+
+adminBtn.addEventListener('click', loadAdminView);
+clientBtn.addEventListener('click', loadClientView);
+</script>
+</body>
+</html>
